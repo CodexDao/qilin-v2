@@ -437,10 +437,6 @@ contract Pool is ERC20, Rates, IPool {
 
         rebase();
 
-        uint256 poolDecimalDiff = StandardDecimal > ERC20(_poolToken).decimals()
-            ? StandardDecimal - ERC20(_poolToken).decimals()
-            : 0;
-
         uint256 liqPrice = _getPrice();
         uint256 pnl = Price.mulPrice(p.size, liqPrice.diff(p.openPrice));
         uint256 fee = setting.mulClosingFee(Price.mulPrice(p.size, liqPrice));
@@ -462,10 +458,10 @@ contract Pool is ERC20, Rates, IPool {
             _totalSizeShort = _totalSizeShort.sub(p.size);
         }
 
-        if (poolDecimalDiff != 0) {
-            pnl = pnl.div(10**poolDecimalDiff);
-            fee = fee.div(10**poolDecimalDiff);
-            fundingFee = fundingFee.div(10**poolDecimalDiff);
+        if (_poolDecimalDiff != 0) {
+            pnl = pnl.div(10**_poolDecimalDiff);
+            fee = fee.div(10**_poolDecimalDiff);
+            fundingFee = fundingFee.div(10**_poolDecimalDiff);
         }
 
         bool isProfit = (liqPrice >= p.openPrice) == (p.direction == 1);
