@@ -124,5 +124,7 @@ interface IRouter {
         address receipt
     ) external payable;
 
+    function exit(uint32 tokenId, address receipt) external;
+
     event TokenCreate(uint32 tokenId, address pool, address sender, uint32 positionId);
 }

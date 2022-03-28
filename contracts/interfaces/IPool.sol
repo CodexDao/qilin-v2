@@ -56,6 +56,11 @@ interface IPool {
         address receipt
     ) external;
 
+    function exit(
+        address receipt,
+        uint32 positionId
+    ) external;
+
     event MintLiquidity(uint256 amount);
 
     event AddLiquidity(

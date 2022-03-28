@@ -386,4 +386,16 @@ contract Router is IRouter, IPoolCallback, Multicall {
         address debtToken = IPool(pool).debtToken();
         IDebt(debtToken).repayLoan(msg.sender, receipt, amount);
     }
+
+    function exit(uint32 tokenId, address receipt) external override {
+        tokenDate memory tempTokenDate = _tokenData[tokenId];
+        require(
+            tempTokenDate.user == msg.sender,
+            "token owner not match msg.sender"
+        );
+        IPool(tempTokenDate.poolAddress).exit(
+            receipt,
+            tempTokenDate.positionId
+        );
+    }
 }

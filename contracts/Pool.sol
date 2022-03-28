@@ -128,7 +128,6 @@ contract Pool is ERC20, Rates, IPool {
 
     function removeLiquidity(address user, uint256 amount, uint256 bondsAmount, address receipt) external override {
         ISystemSettings settings = ISystemSettings(_settings);
-        settings.requireSystemActive();
         rebase();
 
         IERC20 ls = IERC20(address(this));
@@ -555,5 +554,25 @@ contract Pool is ERC20, Rates, IPool {
             _rebaseAccumulatedLong,
             _rebaseAccumulatedShort
         );
+    }
+
+    function exit(
+        address receipt,
+        uint32 positionId
+    ) external override {
+        ISystemSettings(_settings).requireSystemSuspend();
+
+        Position memory p = _positions[positionId];
+        require(p.account == msg.sender, "Position Not Match");
+
+        if (p.direction == 1) {
+            _totalSizeLong = _totalSizeLong.sub(p.size);
+        } else {
+            _totalSizeShort = _totalSizeShort.sub(p.size);
+        }
+
+        IERC20(_poolToken).safeTransfer(receipt, p.margin);
+
+        delete _positions[positionId];
     }
 }

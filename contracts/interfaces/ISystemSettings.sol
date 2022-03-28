@@ -70,6 +70,8 @@ interface ISystemSettings {
 
     function requireSystemActive() external view;
 
+    function requireSystemSuspend() external view;
+
     function resumeSystem() external;
 
     function suspendSystem() external;

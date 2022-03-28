@@ -40,10 +40,12 @@ contract SystemSettings is ISystemSettings, Ownable {
 
     bool private _active;
     address private _official;
+    address private _suspender;
     address private _deployer02;
 
     constructor(address deployer02) {
         _official = msg.sender;
+        _suspender = msg.sender;
         _deployer02 = deployer02;
     }
 
@@ -59,12 +61,16 @@ contract SystemSettings is ISystemSettings, Ownable {
         require(_active, "system is suspended");
     }
 
-    function resumeSystem() external override onlyOwner {
+    function requireSystemSuspend() external view override {
+        require(!_active, "system is active");
+    }
+
+    function resumeSystem() external override onlySuspender {
         _active = true;
         emit Resume(msg.sender);
     }
 
-    function suspendSystem() external override onlyOwner {
+    function suspendSystem() external override onlySuspender {
         _active = false;
         emit Suspend(msg.sender);
     }
@@ -775,6 +781,18 @@ contract SystemSettings is ISystemSettings, Ownable {
 
     function setOfficial(address official) external onlyOwner {
         _official = official;
+    }
+
+    function setSuspender(address suspender) external onlySuspender {
+        _suspender = suspender;
+    }
+
+    modifier onlySuspender() {
+        require(
+            _suspender == msg.sender,
+            "caller is not the suspender"
+        );
+        _;
     }
 
     modifier onlyPoolOwner(address pool) {
