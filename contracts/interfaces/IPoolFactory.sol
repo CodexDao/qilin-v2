@@ -5,7 +5,7 @@ interface IPoolFactory {
 
     function createPoolFromSushi(address tradeToken, address poolToken, bool reverse) external;
 
-    function pools(address poolToken, address uniPool, bool reverse) external view returns (address pool);
+    function pools(address poolToken, address oraclePool, bool reverse) external view returns (address pool);
 
     event CreatePoolFromUni(
         address tradeToken,

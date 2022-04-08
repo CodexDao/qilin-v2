@@ -6,10 +6,7 @@ import './libraries/UQ112x112.sol';
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
-import "@uniswap/v3-core/contracts/libraries/SwapMath.sol";
-import "@uniswap/v3-core/contracts/libraries/LiquidityMath.sol";
 import "@uniswap/v3-core/contracts/libraries/SafeCast.sol";
-import "@uniswap/v3-core/contracts/libraries/BitMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract Rates is IRates {
@@ -23,7 +20,7 @@ contract Rates is IRates {
     uint8 public _oracle;
 
     uint32[] private _secondsAgo;
-    uint32 private constant OBSERVE_TIME_INTERVAL = 1;
+    uint32 private constant OBSERVE_TIME_INTERVAL = 60;
     uint256 private constant E18 = 1e18;
     uint256 private constant E28 = 1e28;
     uint256 private constant E38 = 1e38;
@@ -80,7 +77,7 @@ contract Rates is IRates {
     }
 
     function updatePrice() external override {
-        require(_oracle != 0, "price of uni v3 cannot be updated");
+        require(_oracle != 0, "O Err");
 
         (uint256 priceCumulativeLast, uint32 blockTimestamp, uint256 price) = _getPriceV2();
         if (blockTimestamp != _timestampOld) {
@@ -116,8 +113,8 @@ contract Rates is IRates {
         );
         uint256 sqrtPriceX96 = uint256(
             TickMath.getSqrtRatioAtTick(
-                int24(tickCumulatives[1] - tickCumulatives[0]) /
-                    int24(OBSERVE_TIME_INTERVAL)
+                int24((tickCumulatives[1] - tickCumulatives[0]) /
+                    int56(OBSERVE_TIME_INTERVAL))
             )
         );
         uint256 price;
@@ -206,7 +203,7 @@ contract Rates is IRates {
         uint112 reverse0;
         uint112 reverse1;
         (reverse0, reverse1, _timestampOld) = pair.getReserves();
-        require(reverse0 > 0 && reverse1 > 0, "price has not been initialized");
+        require(reverse0 > 0 && reverse1 > 0, "not init");
 
         if (_reverse) {
             _priceCumulativeOld = pair.price1CumulativeLast();

@@ -5,10 +5,10 @@ const Deployer01 = artifacts.require("./Deployer01.sol");
 const Deployer02 = artifacts.require("./Deployer02.sol");
 const Factory = artifacts.require("./PoolFactory.sol");
 const Router = artifacts.require("./Router.sol");
-const UniFactoryAddressV3 = "0x1F98431c8aD98523631AE4a59f267346ea31F984";  // rinkeby
-const UniFactoryAddressV2 = "0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f";  // rinkeby
-const SushiFactoryAddress = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";  // rinkeby
-const WETHAddress = "0xc778417e063141139fce010982780140aa0cd5ab" // rinkeby
+const UniFactoryAddressV3 = "0x1F98431c8aD98523631AE4a59f267346ea31F984";
+const UniFactoryAddressV2 = "0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f";
+const SushiFactoryAddress = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
+const WETHAddress = "0xc778417e063141139fce010982780140aa0cd5ab"
 
 module.exports = async function (deployer) {
   await deployer.deploy(Deployer01);
@@ -24,7 +24,7 @@ module.exports = async function (deployer) {
     await instance.setClosingFee(BigNumber.from("5"));
     await instance.setLiqFeeMax(BigNumber.from("2000"));
     await instance.setLiqFeeBase(BigNumber.from("1000"));
-    await instance.setLiqFeeCoefficient(BigNumber.from("19200"));
+    await instance.setLiqFeeCoefficient(BigNumber.from("5760"));
     await instance.setRebaseCoefficient(BigNumber.from("57600"));
     await instance.setImbalanceThreshold(BigNumber.from("500"));
     await instance.setPriceDeviationCoefficient(BigNumber.from("12500"));

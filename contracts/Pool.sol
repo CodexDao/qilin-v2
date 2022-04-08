@@ -1,14 +1,11 @@
 pragma solidity 0.7.6;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-import "./libraries/StrConcat.sol";
 import "./libraries/Price.sol";
 import "./libraries/BasicMaths.sol";
-import "./interfaces/IPoolFactory.sol";
 import "./interfaces/IPool.sol";
 import "./interfaces/ISystemSettings.sol";
 import "./interfaces/IPoolCallback.sol";
@@ -29,7 +26,7 @@ contract Pool is ERC20, Rates, IPool {
 
     uint256 public _lastRebaseBlock = 0;
     uint32 public _positionIndex = 0;
-    uint256 public _poolDecimalDiff;
+    uint8 public _poolDecimalDiff;
     mapping(uint32 => Position) public override _positions;
 
     uint256 public _lsAvgPrice = 1e18;
@@ -39,8 +36,8 @@ contract Pool is ERC20, Rates, IPool {
     uint256 public _rebaseAccumulatedLong = 0;
     uint256 public _rebaseAccumulatedShort = 0;
 
-    bool public _eth = false;
-    uint256 private constant StandardDecimal = 18;
+    uint8 private constant StandardDecimal = 18;
+    bool private locked;
 
     constructor(
         address poolToken,
@@ -70,7 +67,7 @@ contract Pool is ERC20, Rates, IPool {
             );
     }
 
-    function poolCallback(address user, uint256 amount) internal {
+    function poolCallback(address user, uint256 amount) internal lock {
         uint256 balanceBefore = IERC20(_poolToken).balanceOf(address(this));
         IPoolCallback(msg.sender).poolV2Callback(
             amount,
@@ -82,7 +79,7 @@ contract Pool is ERC20, Rates, IPool {
         require(
             IERC20(_poolToken).balanceOf(address(this)) >=
                 balanceBefore.add(amount),
-            "poolToken is not enough"
+            "PT Err"
         );
     }
 
@@ -99,7 +96,7 @@ contract Pool is ERC20, Rates, IPool {
 
     function addLiquidity(address user, uint256 amount) external override {
         ISystemSettings(_settings).requireSystemActive();
-        require(amount > 0, "added liquidity must > 0");
+        require(amount > 0, "Amt Err");
         rebase();
 
         uint256 lsTotalSupply = IERC20(address(this)).totalSupply();
@@ -126,7 +123,7 @@ contract Pool is ERC20, Rates, IPool {
         emit AddLiquidity(user, amount, lsTokenAmount, bonds);
     }
 
-    function removeLiquidity(address user, uint256 amount, uint256 bondsAmount, address receipt) external override {
+    function removeLiquidity(address user, uint256 amount, uint256 bondsAmount, address receipt) external override lock {
         ISystemSettings settings = ISystemSettings(_settings);
         rebase();
 
@@ -172,7 +169,7 @@ contract Pool is ERC20, Rates, IPool {
             .mulPrice(_totalSizeLong.diff(_totalSizeShort), _getPrice())
             .div(10**_poolDecimalDiff);
         require(settings.mulLiquidityCoefficient(nakedPosition) <= _liquidityPool.sub2Zero(poolTokenAmount),
-            "liquidity less than naked positions");
+            "Ls Err");
 
         uint256 balanceBefore = ls.balanceOf(address(this));
         IPoolCallback(msg.sender).poolV2RemoveCallback(
@@ -185,7 +182,7 @@ contract Pool is ERC20, Rates, IPool {
         require(
             ls.balanceOf(address(this)) >=
                 balanceBefore.add(amount),
-            "LP Token is not enough"
+            "LS Err"
         );
 
         _burn(address(this), amount);
@@ -205,11 +202,11 @@ contract Pool is ERC20, Rates, IPool {
         setting.checkOpenPosition(leverage);
         require(
             direction == 1 || direction == 2,
-            "Direction Only Can Be 1 Or 2"
+            "D Err"
         );
 
-        require(position > 0, "position must bigger than 0");
-        require(_liquidityPool > 0, "liquidity pool must > 0");
+        require(position > 0, "Amt Err");
+        require(_liquidityPool > 0, "L Err");
 
         rebase();
 
@@ -297,7 +294,7 @@ contract Pool is ERC20, Rates, IPool {
     ) external override {
         ISystemSettings(_settings).requireSystemActive();
         Position memory p = _positions[positionId];
-        require(msg.sender == p.account, "Position Not Match");
+        require(msg.sender == p.account, "P Err");
         rebase();
 
         poolCallback(user, margin);
@@ -314,7 +311,7 @@ contract Pool is ERC20, Rates, IPool {
         setting.requireSystemActive();
 
         Position memory p = _positions[positionId];
-        require(p.account == msg.sender, "Position Not Match");
+        require(p.account == msg.sender, "P Err");
         rebase();
 
         uint256 closePrice = _getPrice();
@@ -351,7 +348,7 @@ contract Pool is ERC20, Rates, IPool {
 
         require(
             isProfit.addOrSub2Zero(p.margin, pnl) > fee.add(fundingFee),
-            "Bankrupted Liquidation"
+            "Close Err"
         );
 
         int256 debtChange;
@@ -428,11 +425,11 @@ contract Pool is ERC20, Rates, IPool {
         address receipt
     ) external override {
         Position memory p = _positions[positionId];
-        require(p.account != address(0), "Position Not Match");
+        require(p.account != address(0), "P Err");
 
         ISystemSettings setting = ISystemSettings(_settings);
         setting.requireSystemActive();
-        require(IERC20(address(this)).balanceOf(user) >= setting.liqLsRequire(), "Not Meet Min Ls Amount");
+        require(IERC20(address(this)).balanceOf(user) >= setting.liqLsRequire(), "too less ls");
 
         rebase();
 
@@ -467,7 +464,7 @@ contract Pool is ERC20, Rates, IPool {
 
         require(
             isProfit.addOrSub2Zero(p.margin, pnl) < fee.add(fundingFee).add(setting.mulMarginRatio(p.margin)),
-            "Position Cannot Be Liquidated by Not Meet MarginRatio"
+            "Liq Err"
         );
 
         uint256 liquidateFee = setting.mulLiquidationFee(p.margin, block.number - p.openBlock);
@@ -550,6 +547,7 @@ contract Pool is ERC20, Rates, IPool {
             _rebaseAccumulatedShort = _rebaseAccumulatedShort.add(rebaseDelta);
         }
         _lastRebaseBlock = currBlock;
+
         emit Rebase(
             _rebaseAccumulatedLong,
             _rebaseAccumulatedShort
@@ -563,7 +561,7 @@ contract Pool is ERC20, Rates, IPool {
         ISystemSettings(_settings).requireSystemSuspend();
 
         Position memory p = _positions[positionId];
-        require(p.account == msg.sender, "Position Not Match");
+        require(p.account == msg.sender, "P Err");
 
         if (p.direction == 1) {
             _totalSizeLong = _totalSizeLong.sub(p.size);
@@ -574,5 +572,12 @@ contract Pool is ERC20, Rates, IPool {
         IERC20(_poolToken).safeTransfer(receipt, p.margin);
 
         delete _positions[positionId];
+    }
+
+    modifier lock() {
+        require(!locked, 'LOCK');
+        locked = true;
+        _;
+        locked = false;
     }
 }

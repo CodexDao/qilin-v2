@@ -26,11 +26,11 @@ interface ISystemSettings {
 
     function deployer02() external view returns (address);
 
+    function leverages(uint32) external view returns (bool);
+
     function protocolFee() external view returns (uint256);
 
     function liqProtocolFee() external view returns (uint256);
-
-    function leverageExist(uint32 leverage_) external view returns (bool);
 
     function marginRatio() external view returns (uint256);
 
@@ -151,6 +151,9 @@ interface ISystemSettings {
         LiquidityCoefficient,
         Other
     }
+
+    event AddLeverage(uint32 leverage);
+    event DeleteLeverage(uint32 leverage);
 
     event SetSystemParam(systemParam param, uint256 value);
     event SetDeviation(bool deviation);
