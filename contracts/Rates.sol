@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.7.6;
 
 import "./interfaces/IRates.sol";
@@ -15,9 +16,9 @@ contract Rates is IRates {
     using SafeCast for uint256;
     using UQ112x112 for uint224;
 
-    address public _oraclePool;
-    bool public _reverse;
-    uint8 public _oracle;
+    address internal _oraclePool;
+    bool internal _reverse;
+    uint8 internal _oracle;
 
     uint32[] private _secondsAgo;
     uint32 private constant OBSERVE_TIME_INTERVAL = 60;
