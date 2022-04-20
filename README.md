@@ -20,3 +20,9 @@ Web3.js v1.2.9
 ## Compile Contracts
 
 `truffle compile`
+
+## Contract Addresses
+
+PoolFactory: `0x20ae7bF537C04918760aCe7a681e564A60fFA49A`
+
+Router: `0xF081d410C680e77E6A1136787B191D97CEF10108`
