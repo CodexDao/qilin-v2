@@ -7,8 +7,8 @@ const Factory = artifacts.require("./PoolFactory.sol");
 const Router = artifacts.require("./Router.sol");
 const UniFactoryAddressV3 = "0x1F98431c8aD98523631AE4a59f267346ea31F984";
 const UniFactoryAddressV2 = "0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f";
-const SushiFactoryAddress = "0xc35DADB65012eC5796536bD9864eD8773aBc74C4";
-const WETHAddress = "0xc778417e063141139fce010982780140aa0cd5ab"
+const SushiFactoryAddress = "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac";
+const WETHAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
 
 module.exports = async function (deployer) {
   await deployer.deploy(Deployer01);
